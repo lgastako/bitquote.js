@@ -5,19 +5,42 @@
 <body>
     <h1>bitquote.js demo</h1>
     <table border="1">
-        <tr>
-            <th>Currency</th>
-            <th>Buy</th>
-            <th>Sell</th>
-        </tr>
-        <tr>
-            <td colspan="3">Waiting for data update...</td>
-        </tr>
+        <thead>
+            <tr>
+                <th>Currency</th>
+                <th>Buy</th>
+                <th>Sell</th>
+            </tr>
+        </thead>
+        <tbody id="tbody">
+            <tr>
+                <td colspan="3">Waiting for data update...</td>
+            </tr>
+        </tbody>
     </table>
     <script src="bitquote.js" type="text/javascript"></script>
     <script type="text/javascript">(function(){
         BTC.listen(function(values) {
             console.log("listened values: %o", values);
+            var tbody = document.getElementById("tbody");
+            tbody.innerHTML = "";
+            var appendCell = function(row, value) {
+                var td = document.createElement("td");
+                td.innerHTML = value;
+                row.appendChild(td);
+            }
+            for (var k in values) {
+                if (values.hasOwnProperty(k)) {
+                    v = values[k];
+                    if (v) {
+                        var row = document.createElement("tr");
+                        appendCell(row, k);
+                        appendCell(row, v.buy);
+                        appendCell(row, v.sell);
+                        tbody.appendChild(row);
+                    }
+                }
+            }
         });
         BTC.go();
     })();</script>

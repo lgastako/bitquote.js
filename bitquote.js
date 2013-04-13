@@ -18,55 +18,6 @@
             console.log("BTC: " + msg);
         }
     }
-    // Adapted from http://www.hunlock.com/blogs/The_Ultimate_Ajax_Object:
-    // (Public domain)
-    var nullf = function() {};
-    var AJAX = function (url, callbackFunction) {
-        var that = this;
-        var urlCall = url;
-        this.updating = false;
-        this.callback = callbackFunction || nullf;
-        this.abort = function() {
-            if (that.updating) {
-                that.updating = false;
-                that.AJAX.abort();
-                that.AJAX = null;
-            }
-        }
-        this.update = function(passData, postMethod) {
-            if (that.updating) { return false; }
-            that.AJAX = null;
-            if (window.XMLHttpRequest) {
-                that.AJAX = new XMLHttpRequest();
-            } else {
-                that.AJAX = new ActiveXObject("Microsoft.XMLHTTP");
-            }
-            if (that.AJAX == null) {
-                return false;
-            } else {
-                that.AJAX.onreadystatechange  =  function() {
-                    if (that.AJAX.readyState == 4) {
-                        that.updating = false;
-                        that.callback(that.AJAX.responseText, that.AJAX.status, that.AJAX.responseXML);
-                        that.AJAX = null;
-                    }
-                }
-                that.updating = new Date();
-                if (/post/i.test(postMethod)) {
-                    var uri = urlCall + '?' + that.updating.getTime();
-                    that.AJAX.open("POST", uri, true);
-                    that.AJAX.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-                    that.AJAX.setRequestHeader("Content-Length", passData.length);
-                    that.AJAX.send(passData);
-                } else {
-                    var uri = urlCall + '?' + passData + '&timestamp = ' + (that.updating.getTime());
-                    that.AJAX.open("GET", uri, true);
-                    that.AJAX.send(null);
-                }
-                return true;
-            }
-        }
-    }
     // From https://github.com/douglascrockford/JSON-js/blob/master/json2.js
     // (Public domain)
     var JSON = {};
@@ -253,10 +204,11 @@
     var DEBUG = true;
     var cachedValues = {};
     var parseValues = function(responseText) {
+        log("parseValues");
     };
     var cacheValues = function(values) {
-        log("cache values: %o", values);
         cachedValues = values;
+        window.x = cachedValues;
     };
     var updateIntervalHandle = null;
     var callbacks = [];
@@ -266,9 +218,15 @@
             try {
                 callback(values);
             } catch (err) {
-                log("callback failed.");
+                log("callback failed: " + err);
             }
         }
+    };
+    var getJSONP = function(url) {
+        var script = document.createElement("script");
+        script.type = "text/javascript";
+        script.src = url;
+        document.body.appendChild(script);
     };
     var BTC = {
         go: function(ms, banOk) {
@@ -278,23 +236,16 @@
                       + "Pass banOk=true to the go method to override.");
                 return false;
             }
+            log("go(ms=" + ms + ", banOk=" + banOk + ")")
             if (updateIntervalHandle) {
                 window.clearInterval(updateIntervalHandle);
             }
-            updateIntervalHandle = setInterval(function() {
-                log("Updating...")
-                var callback = function(responseText, responseStatus) {
-                    if (responseStatus == 200) {
-                        var values = parseValues(responseText);
-                        cacheValues(values);
-                        fireCallbacks(values);
-                    } else {
-                        log("Ticker request failed.");
-                    }
-                };
-                var req = AJAX("http://blockchain.info/ticker", callback);
-                req.update();
-            }, ms);
+            var intervalCb = function() {
+                log("Firing AJAX request.");
+                getJSONP("http://pipes.yahoo.com/pipes/pipe.run?_id=6a617283c3255bf67f36f518770ff7ac&_render=json&_callback=BTC.tickerCb")
+            };
+            intervalCb();
+            updateIntervalHandle = setInterval(intervalCb, ms);
         },
         stop: function() {
             window.clearInterval(updateIntervalHandle);
@@ -304,7 +255,13 @@
         },
         values: function() {
             return cachedValues;
-        }
+        },
+        tickerCb: function(pipesResponse) {
+            var values = pipesResponse.value.items[0];
+            log("tickerCb");
+            cacheValues(values);
+            fireCallbacks(values);
+        },
     };
     root.BTC = BTC;
 })(this);
