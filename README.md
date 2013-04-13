@@ -5,3 +5,5 @@ Pull real-time (well, 10+ second delayed) bitcoin quotes into the browser from M
 
 See demo.html or the top of bitquote.js for example usage.
 
+It's public domain.
+
