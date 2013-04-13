@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<head>
+    <title>bitquote.js demo</title>
+</head>
+<body>
+    <h1>bitquote.js demo</h1>
+    <table border="1">
+        <tr>
+            <th>Currency</th>
+            <th>Buy</th>
+            <th>Sell</th>
+        </tr>
+        <tr>
+            <td colspan="3">Waiting for data update...</td>
+        </tr>
+    </table>
+    <script src="bitquote.js" type="text/javascript"></script>
+    <script type="text/javascript">(function(){
+        BTC.listen(function(values) {
+            console.log("listened values: %o", values);
+        });
+        BTC.go();
+    })();</script>
+</body>
+</html>
