@@ -32,7 +32,7 @@
             for (var k in values) {
                 if (values.hasOwnProperty(k)) {
                     v = values[k];
-                    if (v) {
+                    if (v && (v.buy || v.sell)) {
                         var row = document.createElement("tr");
                         appendCell(row, k);
                         appendCell(row, v.buy);
